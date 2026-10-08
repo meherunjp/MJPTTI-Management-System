@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MJPTTI — Institute Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="publicNotice" class="public-page">
+  <div class="public-top"><div class="brandline"><img class="logo-img" src="mjptti-logo.png" alt="MJPTTI Logo"><div><b>MEHERUN JP TECHNICAL TRAINING INSTITUTE</b><small>Empowering Skills, Building Future</small></div></div><button class="btn light" onclick="showLogin()">🔐 Portal Login</button></div>
+  <main class="public-main"><div class="hero"><span class="eyebrow">OFFICIAL NOTICE BOARD</span><h1>নোটিশ বোর্ড</h1><p>প্রতিষ্ঠানের সকল গুরুত্বপূর্ণ নোটিশ সবার জন্য উন্মুক্ত।</p></div><div id="publicNotices" class="notice-list"></div></main>
+</div>
+
+<div id="login" class="login hide"><div class="loginbox">
+  <img class="login-logo" src="mjptti-logo.png" alt="MJPTTI Logo"><small>MEHERUN JP TECHNICAL TRAINING INSTITUTE</small>
+  <h1>Portal Login</h1><p>আপনার নির্ধারিত Account Type নির্বাচন করুন।</p>
+  <div class="role-tabs"><button data-role="admin" class="active" onclick="selectRole('admin')">Manager</button><button data-role="student" onclick="selectRole('student')">Student</button><button data-role="trainer" onclick="selectRole('trainer')">Trainer</button></div>
+  <label>Username / Student ID</label><input id="u" placeholder="Username / Student ID">
+  <label>Password</label><input id="p" type="password" placeholder="Password">
+  <button class="primary" onclick="login()">Login</button><button class="linkbtn" onclick="showPublic()">← Public Notice Board</button><div id="loginHint" class="hint"></div>
+</div></div>
+
+<div id="app" class="hide"><aside><div class="brand"><img class="sidebar-logo" src="mjptti-logo.png" alt="MJPTTI"><div><b>MJPTTI</b><small>Institute Management</small></div></div><nav id="nav"></nav><footer>Empowering Skills, Building Future</footer></aside>
+<main><header><button class="hamb" onclick="document.querySelector('aside').classList.toggle('open')">☰</button><b id="title">Dashboard</b><div id="globalSearchWrap" class="global-search-wrap"><div class="global-search-box"><span class="global-search-icon">⌕</span><input id="globalSearch" type="search" autocomplete="off" placeholder="Search Student Name / ID / Phone / Batch / Course / Staff ID / Trainer ID"><button id="globalSearchClear" class="global-search-clear hide" type="button" aria-label="Clear Search">×</button></div><div id="globalSearchResults" class="global-search-results"></div></div><span id="userbar"></span></header><section id="content"></section></main></div>
+<script src="app.js"></script>
+</body></html>

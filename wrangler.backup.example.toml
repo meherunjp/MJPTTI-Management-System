@@ -1,0 +1,15 @@
+name = "mjptti-backup-worker"
+main = "workers/scheduled-backup-worker.js"
+compatibility_date = "2026-10-07"
+
+[triggers]
+crons = ["0 18 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mjptti-production-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "BACKUPS"
+bucket_name = "mjptti-backups"
