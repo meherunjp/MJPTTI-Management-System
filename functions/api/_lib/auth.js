@@ -19,14 +19,14 @@ export async function sha256(text){
 }
 export async function hashPassword(password,salt=crypto.randomUUID()){
   const key=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveBits']);
-  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:120000,hash:'SHA-256'},key,256);
-  return `pbkdf2$120000$${salt}$${b64u(bits)}`;
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:100000,hash:'SHA-256'},key,256);
+  return `pbkdf2$100000$${salt}$${b64u(bits)}`;
 }
 export async function verifyPassword(password,stored){
   const [scheme,it,salt,hash]=String(stored||'').split('$');
   if(scheme!=='pbkdf2'||!salt||!hash)return false;
   const key=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveBits']);
-  const bits=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:Number(it)||120000,hash:'SHA-256'},key,256));
+  const bits=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:Number(it)||100000,hash:'SHA-256'},key,256));
   return b64u(bits)===hash;
 }
 async function sign(value,secret){
