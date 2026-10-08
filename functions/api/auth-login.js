@@ -8,13 +8,19 @@ import {
 
 import { loadState } from './_lib/state.js';
 
+
+// ============================================================
+// CREATE / SYNC USERS
+// ============================================================
+
 async function ensureSeedUsers(env, state) {
 
-  // ================================
+  // ==========================================================
   // ADMIN USER
-  // ================================
+  // ==========================================================
 
-  const adminPassword = env.MJPTTI_ADMIN_PASSWORD || '';
+  const adminPassword =
+    env.MJPTTI_ADMIN_PASSWORD || '';
 
   if (adminPassword) {
 
@@ -35,9 +41,23 @@ async function ensureSeedUsers(env, state) {
       await env.DB
         .prepare(`
           INSERT INTO users
-            (id, username, role, name, password_hash, active)
+            (
+              id,
+              username,
+              role,
+              name,
+              password_hash,
+              active
+            )
           VALUES
-            (?, ?, 'admin', ?, ?, 1)
+            (
+              ?,
+              ?,
+              'admin',
+              ?,
+              ?,
+              1
+            )
           ON CONFLICT(id) DO NOTHING
         `)
         .bind(
@@ -50,9 +70,10 @@ async function ensureSeedUsers(env, state) {
     }
   }
 
-  // ================================
+
+  // ==========================================================
   // TRAINER USERS
-  // ================================
+  // ==========================================================
 
   const trainerPassword =
     env.MJPTTI_INITIAL_TRAINER_PASSWORD || '';
@@ -63,12 +84,15 @@ async function ensureSeedUsers(env, state) {
 
       if (!t?.id) continue;
 
+      const trainerId =
+        String(t.id).trim();
+
       const exists =
         await env.DB
           .prepare(
             "SELECT id FROM users WHERE id=? AND role='trainer' LIMIT 1"
           )
-          .bind(String(t.id))
+          .bind(trainerId)
           .first();
 
       if (!exists) {
@@ -76,15 +100,29 @@ async function ensureSeedUsers(env, state) {
         await env.DB
           .prepare(`
             INSERT INTO users
-              (id, username, role, name, password_hash, active)
+              (
+                id,
+                username,
+                role,
+                name,
+                password_hash,
+                active
+              )
             VALUES
-              (?, ?, 'trainer', ?, ?, 1)
+              (
+                ?,
+                ?,
+                'trainer',
+                ?,
+                ?,
+                1
+              )
             ON CONFLICT(id) DO NOTHING
           `)
           .bind(
-            String(t.id),
-            String(t.id),
-            String(t.name || t.id),
+            trainerId,
+            trainerId,
+            String(t.name || trainerId),
             await hashPassword(trainerPassword)
           )
           .run();
@@ -92,75 +130,107 @@ async function ensureSeedUsers(env, state) {
     }
   }
 
-  // ================================
+
+  // ==========================================================
   // STUDENT USERS
-  // ================================
+  //
+  // Student ID:
+  // MJPTTI-B09-001
+  //
+  // Student Username:
+  // MJPTTI-B09-001
+  //
+  // Student Password:
+  // MJ@ + phone last 6 digits
+  //
+  // Example:
+  // 018985987548
+  // Password = MJ@987548
+  // ==========================================================
 
   for (const s of state.students || []) {
 
     if (!s?.id) continue;
 
-    const studentId = String(s.id);
+    const studentId =
+      String(s.id).trim();
 
     const username =
-      String(s.username || studentId).trim();
+      String(
+        s.username || studentId
+      ).trim();
 
-    const password =
-      String(s.password || '').trim();
+    const phone =
+      String(
+        s.phone || ''
+      ).replace(/\D/g, '');
 
-    // Existing student account?
-    const exists =
-      await env.DB
-        .prepare(
-          "SELECT id FROM users WHERE id=? AND role='student' LIMIT 1"
-        )
-        .bind(studentId)
-        .first();
+    // Phone number must have at least 6 digits
+    if (phone.length < 6) continue;
 
-    /*
-     * If student already exists, don't change
-     * their password automatically.
-     */
-    if (exists) continue;
+    // Generate password automatically
+    const studentPassword =
+      `MJ@${phone.slice(-6)}`;
 
-    /*
-     * Old students without password:
-     * generate password from phone last 6 digits.
-     */
-    let studentPassword = password;
+    // Hash password
+    const passwordHash =
+      await hashPassword(
+        studentPassword
+      );
 
-    if (!studentPassword) {
-
-      const phone =
-        String(s.phone || '').replace(/\D/g, '');
-
-      if (phone.length >= 6) {
-        studentPassword =
-          `MJ@${phone.slice(-6)}`;
-      }
-    }
-
-    if (!studentPassword) continue;
+    // ========================================================
+    // CREATE OR UPDATE STUDENT ACCOUNT
+    // ========================================================
 
     await env.DB
       .prepare(`
         INSERT INTO users
-          (id, username, role, name, password_hash, active)
+          (
+            id,
+            username,
+            role,
+            name,
+            password_hash,
+            active
+          )
         VALUES
-          (?, ?, 'student', ?, ?, 1)
-        ON CONFLICT(id) DO NOTHING
+          (
+            ?,
+            ?,
+            'student',
+            ?,
+            ?,
+            1
+          )
+
+        ON CONFLICT(id) DO UPDATE SET
+          username=excluded.username,
+          name=excluded.name,
+          password_hash=excluded.password_hash,
+          active=1,
+          updated_at=CURRENT_TIMESTAMP
       `)
       .bind(
         studentId,
         username,
-        String(s.name || studentId),
-        await hashPassword(studentPassword)
+        String(
+          s.name || studentId
+        ),
+        passwordHash
       )
       .run();
   }
 }
 
-async function reconcileNormalized(env, state) {
+
+// ============================================================
+// RECONCILE NORMALIZED DATA
+// ============================================================
+
+async function reconcileNormalized(
+  env,
+  state
+) {
 
   const students =
     Array.isArray(state.students)
@@ -172,21 +242,31 @@ async function reconcileNormalized(env, state) {
       ? state.payments
       : [];
 
-  const studentIds = new Set();
+  const studentIds =
+    new Set();
 
-  // ================================
+
+  // ==========================================================
   // STUDENTS TABLE
-  // ================================
+  // ==========================================================
 
-  for (let i = 0; i < students.length; i += 50) {
+  for (
+    let i = 0;
+    i < students.length;
+    i += 50
+  ) {
 
     const rows =
       students
         .slice(i, i + 50)
-        .filter(s => s?.id)
+        .filter(
+          s => s?.id
+        )
         .map(s => {
 
-          studentIds.add(String(s.id));
+          studentIds.add(
+            String(s.id)
+          );
 
           return env.DB
             .prepare(`
@@ -234,11 +314,16 @@ async function reconcileNormalized(env, state) {
     }
   }
 
-  // ================================
-  // PAYMENTS TABLE
-  // ================================
 
-  for (let i = 0; i < payments.length; i += 50) {
+  // ==========================================================
+  // PAYMENTS TABLE
+  // ==========================================================
+
+  for (
+    let i = 0;
+    i < payments.length;
+    i += 50
+  ) {
 
     const rows =
       payments
@@ -246,11 +331,20 @@ async function reconcileNormalized(env, state) {
         .filter(
           p =>
             p &&
-            (p.receipt || p.receiptNumber) &&
-            studentIds.has(
-              String(p.student || p.student_id || '')
+            (
+              p.receipt ||
+              p.receiptNumber
             ) &&
-            Number(p.amount || 0) > 0
+            studentIds.has(
+              String(
+                p.student ||
+                p.student_id ||
+                ''
+              )
+            ) &&
+            Number(
+              p.amount || 0
+            ) > 0
         )
         .map(p =>
           env.DB
@@ -282,17 +376,35 @@ async function reconcileNormalized(env, state) {
                 next_due=excluded.next_due
             `)
             .bind(
-              String(p.receipt || p.receiptNumber),
-              String(p.student || p.student_id),
-              Number(p.amount || 0),
+              String(
+                p.receipt ||
+                p.receiptNumber
+              ),
+              String(
+                p.student ||
+                p.student_id
+              ),
+              Number(
+                p.amount || 0
+              ),
               String(
                 p.date ||
-                new Date().toISOString().slice(0, 10)
+                new Date()
+                  .toISOString()
+                  .slice(0, 10)
               ),
-              String(p.method || 'Cash'),
-              String(p.reference || ''),
-              String(p.note || ''),
-              Number(p.installment || 1),
+              String(
+                p.method || 'Cash'
+              ),
+              String(
+                p.reference || ''
+              ),
+              String(
+                p.note || ''
+              ),
+              Number(
+                p.installment || 1
+              ),
               p.nextDue || null,
               p.createdAt ||
                 new Date().toISOString()
@@ -305,9 +417,22 @@ async function reconcileNormalized(env, state) {
   }
 }
 
-export async function onRequestPost({ request, env }) {
+
+// ============================================================
+// LOGIN API
+// ============================================================
+
+export async function onRequestPost({
+  request,
+  env
+}) {
+
+  // ==========================================================
+  // CHECK D1
+  // ==========================================================
 
   if (!env.DB) {
+
     return json(
       {
         error:
@@ -317,7 +442,13 @@ export async function onRequestPost({ request, env }) {
     );
   }
 
+
+  // ==========================================================
+  // CHECK AUTH SECRET
+  // ==========================================================
+
   if (!env.MJPTTI_AUTH_SECRET) {
+
     return json(
       {
         error:
@@ -327,51 +458,108 @@ export async function onRequestPost({ request, env }) {
     );
   }
 
+
+  // ==========================================================
+  // READ REQUEST
+  // ==========================================================
+
   let body;
 
   try {
-    body = await request.json();
+
+    body =
+      await request.json();
+
   } catch {
+
     return json(
-      { error: 'Invalid JSON.' },
+      {
+        error:
+          'Invalid JSON.'
+      },
       400
     );
   }
 
+
+  // ==========================================================
+  // LOGIN DATA
+  // ==========================================================
+
   const username =
-    String(body?.username || '').trim();
+    String(
+      body?.username || ''
+    ).trim();
 
   const password =
-    String(body?.password || '');
+    String(
+      body?.password || ''
+    );
 
   const role =
-    String(body?.role || '');
+    String(
+      body?.role || ''
+    );
+
+
+  // ==========================================================
+  // VALIDATE
+  // ==========================================================
 
   if (
     !username ||
     !password ||
-    !['admin', 'trainer', 'student'].includes(role)
+    ![
+      'admin',
+      'trainer',
+      'student'
+    ].includes(role)
   ) {
+
     return json(
-      { error: 'Invalid login request.' },
+      {
+        error:
+          'Invalid login request.'
+      },
       400
     );
   }
 
+
+  // ==========================================================
+  // LOAD STATE
+  // ==========================================================
+
   const state =
     await loadState(env);
 
-  // Create/sync Admin, Trainer and Student users.
-  await ensureSeedUsers(env, state);
 
-  // Keep normalized student/payment data updated.
+  // ==========================================================
+  // CREATE / UPDATE USERS
+  // ==========================================================
+
+  await ensureSeedUsers(
+    env,
+    state
+  );
+
+
+  // ==========================================================
+  // SYNC NORMALIZED DATA
+  // ==========================================================
+
   if (role === 'admin') {
-    await reconcileNormalized(env, state);
+
+    await reconcileNormalized(
+      env,
+      state
+    );
   }
 
-  // ================================
+
+  // ==========================================================
   // FIND USER
-  // ================================
+  // ==========================================================
 
   const user =
     await env.DB
@@ -388,17 +576,28 @@ export async function onRequestPost({ request, env }) {
           AND role=?
         LIMIT 1
       `)
-      .bind(username, role)
+      .bind(
+        username,
+        role
+      )
       .first();
+
+
+  // ==========================================================
+  // VERIFY LOGIN
+  // ==========================================================
 
   if (
     !user ||
     !user.active ||
-    !(await verifyPassword(
-      password,
-      user.password_hash
-    ))
+    !(
+      await verifyPassword(
+        password,
+        user.password_hash
+      )
+    )
   ) {
+
     return json(
       {
         error:
@@ -408,9 +607,10 @@ export async function onRequestPost({ request, env }) {
     );
   }
 
-  // ================================
+
+  // ==========================================================
   // CREATE SESSION
-  // ================================
+  // ==========================================================
 
   const token =
     await createSession(
@@ -418,8 +618,14 @@ export async function onRequestPost({ request, env }) {
       env.MJPTTI_AUTH_SECRET
     );
 
+
+  // ==========================================================
+  // SUCCESS
+  // ==========================================================
+
   return new Response(
     JSON.stringify({
+
       ok: true,
 
       user: {
@@ -428,11 +634,13 @@ export async function onRequestPost({ request, env }) {
         role: user.role,
         name: user.name
       }
+
     }),
     {
       status: 200,
 
       headers: {
+
         'content-type':
           'application/json; charset=utf-8',
 
