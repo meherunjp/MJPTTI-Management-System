@@ -9,7 +9,34 @@ let cloudMode=false, cloudAuthenticated=false, cloudVersion=null, cloudSavePromi
 async function api(url,options={}){const o={credentials:'include',...options,headers:{...(options.headers||{})}};if(o.body&&typeof o.body!=='string'){o.headers['Content-Type']='application/json';o.body=JSON.stringify(o.body)}const r=await fetch(url,o);let data=null;try{data=await r.json()}catch{}if(!r.ok)throw new Error(data?.error||`Request failed (${r.status})`);if(data&&Number.isInteger(Number(data.version))&&cloudAuthenticated)cloudVersion=Number(data.version);return data}
 async function financeMutation(action,payload){if(!cloudMode||!cloudAuthenticated)throw new Error('Cloud database login is required for financial changes.');return api('/api/finance-mutation',{method:'POST',body:{action,...payload}})}
 async function loadPublicCloud(){try{const x=await api('/api/public-bootstrap');if(x?.settings){d={...d,...x};d.notices=x.notices||d.notices;d.settings={...d.settings,...x.settings};d.courses=x.courses||d.courses;d.batches=x.batches||d.batches;cloudMode=true;normalize();return true}}catch(e){}return false}
-async function loadPrivateCloud(){const x=await api('/api/bootstrap');d=x.state;currentUser=x.user;cloudVersion=Number(x.version||1);cloudMode=true;cloudAuthenticated=true;cloudHydrating=true;normalize();cloudHydrating=false;return true}
+async function loadPrivateCloud(){
+  const x=await api('/api/bootstrap');
+
+  if(!x || !x.state){
+    throw new Error('Cloud data could not be loaded.');
+  }
+
+  d=x.state;
+
+  if(x.user){
+    currentUser=x.user;
+
+    if(x.user.role){
+      role=x.user.role;
+    }
+  }
+
+  cloudVersion=Number(x.version||1);
+  cloudMode=true;
+  cloudAuthenticated=true;
+  cloudHydrating=true;
+
+  normalize();
+
+  cloudHydrating=false;
+
+  return true;
+}
 function queueCloudSave(){if(cloudHydrating||!cloudMode||!cloudAuthenticated||!currentUser||cloudVersion==null)return;const payload=JSON.parse(JSON.stringify(d));const expectedVersion=cloudVersion;cloudSavePromise=cloudSavePromise.then(async()=>{const out=await api('/api/state',{method:'POST',body:{state:payload,version:expectedVersion}});cloudVersion=Number(out.version||expectedVersion+1);}).catch(e=>{console.error(e); if(String(e.message||'').includes('DATA_CONFLICT')){cloudAuthenticated=false; alert('এই data অন্য একটি device থেকে পরিবর্তন হয়েছে। Page reload করে আবার কাজ করুন।');}});}
 
 function today(){return new Date().toISOString().slice(0,10)}
