@@ -9,27 +9,31 @@ export async function onRequestPost({ request, env }) {
       return json({ error: 'Not authenticated.' }, 401);
     }
 
-    if (user.role !== 'admin') {
-      return json({ error: 'Admin access required.' }, 403);
-    }
-
     const body = await request.json();
-
     const state = await loadState(env);
 
     if (!Array.isArray(state.students)) {
       state.students = [];
     }
 
-    const student = body?.student || body;
+    const incoming = body?.student || body;
 
-    if (!student || typeof student !== 'object') {
+    if (!incoming || typeof incoming !== 'object') {
       return json({ error: 'Invalid student data.' }, 400);
     }
 
-    if (!student.id) {
-      return json({ error: 'Student ID is required.' }, 400);
-    }
+    // Frontend may send the student ID under different names.
+    const studentId =
+      incoming.id ||
+      incoming.studentId ||
+      incoming.student_id ||
+      incoming.sid ||
+      null;
+
+    const student = {
+      ...incoming,
+      id: studentId || `ST-${Date.now()}`
+    };
 
     const existingIndex = state.students.findIndex(
       s => String(s.id) === String(student.id)
