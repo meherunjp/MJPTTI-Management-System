@@ -389,7 +389,21 @@ if(p==='studentHome'){
 }
 if(p==='myprofile'){const s=d.students.find(x=>x.id===currentUser.id);h=head('My Profile','Complete admission information','<button class="btn" onclick="studentConfirm(\''+s.id+'\')">Confirmation Copy</button><button class="btn" onclick="printCurrent()">🖨 Print / PDF</button>')+`<div class="panel">${profileHtml(s)}</div>`}
 if(p==='myattendance')h=head('My Attendance','All previous attendance records','<button class="btn" onclick="attendancePrint(\''+currentUser.id+'\')">🖨 Print / PDF</button>')+`<div class="panel">${attendanceTable(currentUser.id)}</div>`;
-if(p==='myresults')h=head('My Full Results','All examinations and complete academic summary','<button class="btn" onclick="fullResultSheet(\''+currentUser.id+'\')">▣ Full Result Sheet</button>')+`<div class="panel">${resultSheetHtml(currentUser.id)}</div>`;ZZZ
+if(p==='myresults'){
+  const studentId=currentUser?.id||'';
+
+  if(!studentId){
+    h=head('My Full Results','Student information unavailable')+
+      `<div class="panel"><div class="empty">Please log in again.</div></div>`;
+  }else{
+    h=head(
+      'My Full Results',
+      'All examinations and complete academic summary',
+      '<button class="btn" onclick="fullResultSheet(\''+studentId+'\')">▣ Full Result Sheet</button>'
+    )+
+    `<div class="panel">${resultSheetHtml(studentId)}</div>`;
+  }
+}
 if(p==='mydocuments'){const s=d.students.find(x=>x.id===currentUser.id);h=head('My Documents','Confirmation, attendance, result, receipts and certificate')+`<div class="panel"><button class="btn" onclick="studentConfirm('${s.id}')">Confirmation</button> <button class="btn" onclick="attendancePrint('${s.id}')">Attendance</button> <button class="btn" onclick="fullResultSheet('${s.id}')">Full Result</button> <button class="btn" onclick="studentDoc('${s.id}')">Document Pack</button></div>`}
 if(p==='trainerHome'){const tc=trainerAssignedCourses(),ts=trainerStudents(),tb=trainerBatches(),tr=d.exams.filter(x=>trainerCanStudent(x.student));h=head('Trainer Dashboard','Trainer Portal — only assigned courses are available')+`<div class="cards">${stat('Assigned Courses',tc.length)}${stat('My Students',ts.length)}${stat('My Batches',tb.length)}${stat('My Results',tr.length)}</div><div class="panel"><h3>My Assigned Courses</h3><div class="quick">${tc.map(c=>`<button type="button"><b>${esc(c)}</b><br><small>${ts.filter(s=>s.course===c).length} students</small></button>`).join('')||'<div class="empty">No course assigned yet. Please contact Admin.</div>'}</div></div>`;}
 $('content').innerHTML=h;
