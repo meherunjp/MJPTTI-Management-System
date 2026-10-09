@@ -112,14 +112,14 @@ aside{position:fixed;inset:0 auto 0 0;width:255px;background:var(--dark);color:#
     background-position:center;
     background-repeat:no-repeat;
     background-size:contain;
-    opacity:.10;
+    opacity:.07;
     pointer-events:none;
-    z-index:0;
+    z-index:5;
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact;
   }
   body>*{position:relative;z-index:1}
-  .no-print,aside,header{z-index:2}
+  .no-print,aside,header{z-index:6}
   .print-idcard body::before,.print-idcard::before,.print-idcard-duplex::before{display:none!important}
 }
 /* Exam & Result v44 */
