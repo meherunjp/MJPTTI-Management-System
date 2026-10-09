@@ -1,4 +1,4 @@
-MJPTTI — Production V12 — Final Deep Audit Build
+MJPTTI — Production V13 — Trainer Provisioning & State Save Fix
 ================================
 
 This build keeps the existing MJPTTI UI, print documents and workflows, but adds a Cloudflare D1-backed shared application state and secure server authentication layer.
@@ -255,3 +255,13 @@ V12 — FINAL DEEP AUDIT FIXES
 DEPLOYMENT NOTE
 ===============
 The main portal is deployed as a Cloudflare Pages project. The optional scheduled backup Worker is a separate deployment and must be configured/deployed separately with wrangler.backup.toml.
+
+
+PHASE 6 — TRAINER ACCOUNT SETUP FIX (V13)
+=========================================
+- Trainer accounts are created through authenticated POST /api/trainer-create.
+- Trainer ID is the username; a strong temporary password is generated server-side and returned once.
+- Password hashes are stored in D1 users; plaintext passwords are not stored in app_state.
+- Admin must privately share the temporary password and should follow a password-change workflow before broad production use.
+- Fixed /api/state optimistic-version check to inspect the app_state UPDATE result rather than the first credential insert result.
+- Deploy the complete ZIP contents with Functions and the existing D1 binding DB.
