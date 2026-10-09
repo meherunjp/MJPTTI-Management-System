@@ -1238,21 +1238,9 @@ function openPrintable(title,body,type='document',mode='preview'){let w=window._
 .print-certificate .cert-institute{font-size:15.8pt!important}
 @media(max-width:700px){.print-certificate .cert-logo-top{width:38mm!important;height:25mm!important}.print-certificate .cert-institute{font-size:11.8pt!important}}
 
-/* Result Sheet watermark */
-.print-result .result-only-watermark {
-  display: block !important;
-  position: fixed !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 105mm !important;
-  height: 105mm !important;
-  transform: translate(-50%, -50%) !important;
-  opacity: 0.12 !important;
-  background: url('mjptti-logo.png') center / contain no-repeat !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
-}</style>${type==='idcard-duplex'?`<style>@page idcardExactPage{size:53.98mm 85.60mm;margin:0!important}.print-idcard-duplex{page:idcardExactPage!important;width:53.98mm!important;min-width:53.98mm!important;padding:0!important;margin:0!important;background:#fff!important}.print-idcard-duplex .print-watermark{display:none!important}.print-idcard-duplex .idcard-exact-page{width:53.98mm!important;height:85.60mm!important;min-width:53.98mm!important;min-height:85.60mm!important;margin:0!important;padding:0!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.print-idcard-duplex .idcard-exact-page:last-of-type{page-break-after:auto!important;break-after:auto!important}.print-idcard-duplex .idcard-face{width:53.98mm!important;height:85.60mm!important;min-width:53.98mm!important;min-height:85.60mm!important;box-shadow:none!important;border:0!important;border-radius:0!important;overflow:hidden!important}.print-idcard-duplex .np{display:none!important}html,body{margin:0!important;padding:0!important;background:#fff!important;width:53.98mm!important;min-width:53.98mm!important}</style>`:''}</head><body class="print-${esc(type)}">
-${type==='result'?'<div class="print-watermark result-only-watermark" aria-hidden="true"></div>':type==='result-search'?'':'<div class="print-watermark" aria-hidden="true"></div>'}${body}<div class="np"><button onclick="print()">🖨 Print</button><button onclick="print()">▣ Save as PDF</button></div></body></html>`);w.document.close(); if(mode==='print'||mode==='pdf'){setTimeout(()=>{try{w.focus();w.print()}catch(e){}},500)}}
+</style>${type==='idcard-duplex'?`<style>@page idcardExactPage{size:53.98mm 85.60mm;margin:0!important}.print-idcard-duplex{page:idcardExactPage!important;width:53.98mm!important;min-width:53.98mm!important;padding:0!important;margin:0!important;background:#fff!important}.print-idcard-duplex .print-watermark{display:none!important}.print-idcard-duplex .idcard-exact-page{width:53.98mm!important;height:85.60mm!important;min-width:53.98mm!important;min-height:85.60mm!important;margin:0!important;padding:0!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.print-idcard-duplex .idcard-exact-page:last-of-type{page-break-after:auto!important;break-after:auto!important}.print-idcard-duplex .idcard-face{width:53.98mm!important;height:85.60mm!important;min-width:53.98mm!important;min-height:85.60mm!important;box-shadow:none!important;border:0!important;border-radius:0!important;overflow:hidden!important}.print-idcard-duplex .np{display:none!important}html,body{margin:0!important;padding:0!important;background:#fff!important;width:53.98mm!important;min-width:53.98mm!important}</style>`:''}</head><body class="print-${esc(type)}">
+
+${type==='result-search' || type==='idcard-duplex' || type==='idcard' ? '' : '<div class="print-watermark" aria-hidden="true"></div>'}${body}<div class="np"><button onclick="print()">🖨 Print</button><button onclick="print()">▣ Save as PDF</button></div></body></html>`);w.document.close(); if(mode==='print'||mode==='pdf'){setTimeout(()=>{try{w.focus();w.print()}catch(e){}},500)}}
 (async()=>{
   const restored=await restoreSession();
   if(!restored){
