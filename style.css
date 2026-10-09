@@ -98,20 +98,21 @@ aside{position:fixed;inset:0 auto 0 0;width:255px;background:var(--dark);color:#
   .salary-sheet-footer{margin-top:8mm;padding-top:0}.salary-authorized{width:45mm}.salary-authorized .signature-line{margin-top:8mm}
 }
 
-/* v41: global print watermark for every printable document */
+/* v41: centered logo watermark on every printable page */
 @media print{
   html,body{background:#fff!important}
-  body{position:relative!important}
+  body{position:relative!important;isolation:isolate!important}
   body::before{
-    content:url('mjptti-logo.png');
+    content:"";
     position:fixed;
-    left:50%;
-    top:50%;
-    width:105mm;
-    height:105mm;
-    object-fit:contain;
+    left:50%;top:50%;
+    width:105mm;height:105mm;
     transform:translate(-50%,-50%);
-    opacity:.12;
+    background-image:url('mjptti-logo.png');
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:contain;
+    opacity:.10;
     pointer-events:none;
     z-index:0;
     -webkit-print-color-adjust:exact;
@@ -119,6 +120,7 @@ aside{position:fixed;inset:0 auto 0 0;width:255px;background:var(--dark);color:#
   }
   body>*{position:relative;z-index:1}
   .no-print,aside,header{z-index:2}
+  .print-idcard body::before,.print-idcard::before,.print-idcard-duplex::before{display:none!important}
 }
 /* Exam & Result v44 */
 .result-status{display:inline-block;min-width:58px;text-align:center;padding:5px 9px;border-radius:6px;font-weight:900;font-size:11px;background:#eef2f7;color:#344054}.result-status.pass{background:#dcfce7;color:#166534;border:1px solid #86efac}.result-status.fail{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}.result-entry-table td{vertical-align:top}.exam-note{width:100%;min-width:180px;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:6px;padding:7px;resize:vertical}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-weight:800;font-size:13px;color:#344054}.field select[multiple]{min-height:150px}.actions{margin-top:14px}.result-entry-table .mark-input{width:95px}.result-sheet{margin-bottom:18px}.result-sheet .result-status{font-size:10px}
