@@ -8,6 +8,17 @@ import {
 
 import { loadState } from './_lib/state.js';
 
+function generateTrainerId(number) {
+  return `MJPTTI-TR-${String(number).padStart(3, '0')}`;
+}
+
+function generateTemporaryPassword() {
+  const bytes = crypto.getRandomValues(new Uint8Array(9));
+  return 'TR@' + Array.from(bytes, b =>
+    b.toString(36).padStart(2, '0')
+  ).join('').slice(0, 12);
+}
+
 
 // ============================================================
 // CREATE / SYNC USERS
